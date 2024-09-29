@@ -19,7 +19,9 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.mixer.music.load("anthem_barca.wav")
 pygame.mixer.music.set_volume(0.5)
 pygame.mixer.music.play(-1)
-    
+
+congrats_sound = pygame.mixer.Sound("siuu.mp3")
+congrats_sound.set_volume(2)
 
 def flip(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
@@ -99,7 +101,7 @@ class Player(pygame.sprite.Sprite):
         self.hit_count = 0
 
     def jump(self):
-        self.y_vel = -self.GRAVITY * 8
+        self.y_vel = -self.GRAVITY * 10
         self.animation_count = 0
         self.jump_count += 1
         if self.jump_count == 1:
@@ -404,10 +406,10 @@ def handle_move(player, objects):
 pygame.font.init()
 font = pygame.font.SysFont('Arial', 36)
 
-checkpoint_reached = False
 
 def main(window):
     global checkpoint_reached
+    checkpoint_reached = False
     global initial_offset_x
     clock = pygame.time.Clock()
     background, bg_image = get_background("LeBG.jpg")
@@ -422,6 +424,9 @@ def main(window):
     checkpoint = Checkpoint(6364, HEIGHT - block_size* 3.3, 64, 64)
     checkpoint.on()
     
+    # congrats_text = new_font.render('Congrats', True, (255, 255, 255))  # Warna teks putih, Anda bisa mengganti sesuai keinginan
+    # window.blit(congrats_text, (50, 50))  # x_pos dan y_pos adalah posisi di mana Anda ingin teks tersebut ditampilkan
+
     saws =[]
     start_saw = 4616
     gaps = 192
@@ -526,9 +531,13 @@ def main(window):
     offset_x = 0
     scroll_area_width = 200
 
-    congrats_font = pygame.font.SysFont('Arial', 36) 
-    congrats_text_rendered = congrats_font.render('Congratulations!', True, (255, 255, 255)) 
-
+    # # congrats_font = pygame.font.SysFont('Arial', 36) 
+    # # congrats_text_rendered = congrats_font.render('Congratulations!', True, (255, 255, 255)) 
+    # if player.rect.colliderect(checkpoint.rect) and not checkpoint_reached:
+    #     checkpoint_reached = True  # Set variabel ke True jika pemain mencapai checkpoint
+    #     # Jika Anda ingin menampilkan teks 'Congratulations!', Anda bisa memasukkannya di sini
+    #     congrats_text_rendered = congrats_font.render('Congratulations!', True, (255, 255, 255))
+    #     window.blit(congrats_text_rendered, (WIDTH // 2 - congrats_text_rendered.get_width() // 2, HEIGHT // 2))
 
     run = True
     while run:
@@ -547,10 +556,18 @@ def main(window):
                     health_bar.current_health = health_bar.max_health
                     initial_offset_x = offset_x
 
-            if player.rect.colliderect(checkpoint.rect) and not checkpoint_reached:
-                checkpoint_reached = True
-                if player.rect.colliderect(checkpoint.rect) and not checkpoint_reached:
-                    checkpoint_reached = True
+            # Di dalam loop utama Anda, setelah deteksi checkpoint:
+        if player.rect.colliderect(checkpoint.rect) and not checkpoint_reached:
+            checkpoint_reached = True  # Atur variabel ke True jika pemain mencapai checkpoint
+            congrats_font = pygame.font.SysFont('supermario85', 40)
+            congrats_text_rendered = congrats_font.render('Congrats!', True, (255, 255, 255))
+            window.blit(congrats_text_rendered, (WIDTH // 2 - congrats_text_rendered.get_width() // 2, HEIGHT // 2))
+            congrats_sound.play()
+            # Reset posisi pemain atau lakukan tindakan lain yang Anda inginkan setelah mencapai checkpoint
+            player.rect.x = 100  # Contoh: reset posisi pemain ke 100
+            player.rect.y = 100  # Contoh: reset posisi pemain ke 100
+            offset_x = 0
+
 
         for fire in fires:
             fire.loop()
@@ -583,18 +600,44 @@ def main(window):
         draw(window, background, bg_image, player, objects, offset_x)
         health_bar.draw(window)
 
-        if checkpoint_reached:
-            window.blit(congrats_text_rendered, (WIDTH // 2 - congrats_text_rendered.get_width() // 2, HEIGHT // 2))
+        # if checkpoint_reached:
+        #     window.blit(congrats_text_rendered, (WIDTH // 2 - congrats_text_rendered.get_width() // 2, HEIGHT // 2))
 
 
         if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.x_vel > 0) or (
                 (player.rect.left - offset_x <= scroll_area_width) and player.x_vel < 0):
             offset_x += player.x_vel
+        
+        # if player.rect.colliderect(checkpoint.rect) and not checkpoint_reached:
+        #     checkpoint_reached = True
+        #     # Menampilkan pesan "Congrats"
+        #     font = pygame.font.SysFont('Arial', 64)
+        #     text = font.render('Congrats!', True, (255, 255, 255))
+        #     window.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+            
+            # # Mengatur ulang posisi pemain ke awal
+            # player.rect.x = 100
+            # player.rect.y = 100
+            
+            # # Mengatur ulang posisi kamera (jika menggunakan offset)
+            # offset_x = 0
+        if checkpoint_reached:
+            window.blit(congrats_text_rendered, (WIDTH // 2 - congrats_text_rendered.get_width() // 2, HEIGHT // 2))
+            reset_game(player)  # Atur ulang pemain ke posisi awal
 
         pygame.display.update()
-
+        
     pygame.quit()
     quit()
 
+def reset_game(player):
+    """Atur ulang posisi pemain ke awal."""
+    player.rect.x = 100
+    player.rect.y = 100
+    return 0
+
 if __name__ == "__main__":
+    pygame.init()
+    window = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Game Title")
     main(window)
